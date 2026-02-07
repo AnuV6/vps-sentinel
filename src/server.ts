@@ -13,22 +13,31 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 app.get('/', async (req, res) => {
-    const db = await getDb();
+    try {
+        const db = await getDb();
 
-    // Get all monitors
-    const monitors = await db.all('SELECT * FROM monitors');
+        // Get all monitors
+        const monitors = await db.all('SELECT * FROM monitors');
 
-    // For each monitor, get the last 20 checks for the sparkline
-    for (let m of monitors) {
-        const history = await db.all(
-            `SELECT latency, status, timestamp FROM checks WHERE monitor_id = ? ORDER BY id DESC LIMIT 20`,
-            [m.id]
-        );
-        m.history = history.reverse(); // Newest last for chart
+        // For each monitor, get the last 20 checks for the sparkline
+        for (let m of monitors) {
+            const history = await db.all(
+                `SELECT latency, status, timestamp FROM checks WHERE monitor_id = ? ORDER BY id DESC LIMIT 20`,
+                [m.id]
+            );
+            m.history = history.reverse(); // Newest last for chart
+        }
+
+        res.render('dashboard', { monitors });
+    } catch (error) {
+        console.error('[ERROR] Failed to load dashboard:', error);
+        res.status(500).send('Internal Server Error');
     }
-
-    res.render('dashboard', { monitors });
 });
 
 app.post('/add', async (req, res) => {
@@ -50,9 +59,23 @@ app.post('/delete/:id', async (req, res) => {
     res.redirect('/');
 });
 
+// Global Error Handlers
+process.on('uncaughtException', (error) => {
+    console.error('[FATAL] Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('[FATAL] Unhandled Rejection:', reason);
+});
+
 // Start Server
 app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    await getDb(); // Init DB
-    startMonitoring(); // Start background worker
+    try {
+        await getDb(); // Init DB
+        startMonitoring(); // Start background worker
+    } catch (error) {
+        console.error('[FATAL] Failed to initialize application:', error);
+        process.exit(1);
+    }
 });
