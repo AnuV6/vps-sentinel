@@ -7,7 +7,7 @@ export async function getDb() {
   if (db) return db;
 
   db = await open({
-    filename: './vps-sentinel.db',
+    filename: process.env.DATABASE_URL || './vps-sentinel.db',
     driver: sqlite3.Database
   });
 
