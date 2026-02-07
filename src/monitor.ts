@@ -77,13 +77,27 @@ async function checkPort(monitor: any): Promise<{ status: number, latency: numbe
 export async function checkSite(monitor: any) {
     const db = await getDb();
     let result = { status: 500, latency: 0 };
+    const maxRetries = 2;
 
-    if (monitor.type === 'port') {
-        result = await checkPort(monitor);
-    } else if (monitor.type === 'keyword') {
-        result = await checkKeyword(monitor);
-    } else {
-        result = await checkHttp(monitor);
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+            // Wait before retry (exponential backoff: 2s, 4s)
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+            console.log(`[RETRY] ${monitor.name} (${monitor.url}) - Attempt ${attempt + 1}`);
+        }
+
+        if (monitor.type === 'port') {
+            result = await checkPort(monitor);
+        } else if (monitor.type === 'keyword') {
+            result = await checkKeyword(monitor);
+        } else {
+            result = await checkHttp(monitor);
+        }
+
+        // If successful, stop retrying
+        if (result.status === 200) {
+            break;
+        }
     }
 
     const { status, latency } = result;
