@@ -8,7 +8,7 @@ let db: Database | null = null;
 export async function getDb() {
   if (db) return db;
 
-  const dbPath = process.env.DATABASE_URL || './vps-sentinel.db';
+  const dbPath = process.env.DATABASE_URL || './data/vps-sentinel.db';
   const resolvedPath = path.resolve(dbPath);
   const dbDir = path.dirname(resolvedPath);
 

@@ -3,15 +3,17 @@ version: '3.8'
 services:
   app:
     build: .
-    container_name: vps-sentinel
-    restart: unless-stopped
+    restart: always
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - vps_data:/app/data
     environment:
       - DATABASE_URL=/app/data/vps-sentinel.db
       - NODE_ENV=production
     # Load .env file if it exists
     env_file:
       - .env
+
+volumes:
+  vps_data:
