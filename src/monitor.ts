@@ -31,6 +31,13 @@ async function checkHttp(monitor: any): Promise<{ status: number, latency: numbe
 
         // Extended logging for debugging
         console.error(`[CHECK FAILED] ${monitor.url} | Status: ${status} | Latency: ${latency}ms`);
+        if (error.response) {
+            console.error(`[DEBUG HEADERS]`, JSON.stringify(error.response.headers));
+            const dataPreview = typeof error.response.data === 'string'
+                ? error.response.data.substring(0, 200)
+                : JSON.stringify(error.response.data).substring(0, 200);
+            console.error(`[DEBUG BODY]`, dataPreview);
+        }
         if (error.code) console.error(`[ERROR CODE] ${error.code}`);
         if (error.message) console.error(`[ERROR MSG] ${error.message}`);
 
