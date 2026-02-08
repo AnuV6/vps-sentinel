@@ -13,16 +13,28 @@ async function checkHttp(monitor: any): Promise<{ status: number, latency: numbe
     const start = Date.now();
     try {
         const res = await axios.get(monitor.url, {
-            timeout: 10000,
+            timeout: 30000, // Increased to 30s
             httpsAgent: agent,
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) VPS-Sentinel/1.0' }
+            headers: {
+                // Mimic genuine browser to avoid blocking
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
         });
         return { status: res.status, latency: Date.now() - start };
     } catch (error: any) {
-        return {
-            status: error.response ? error.response.status : 0,
-            latency: Date.now() - start
-        };
+        const latency = Date.now() - start;
+        const status = error.response ? error.response.status : 0;
+
+        // Extended logging for debugging
+        console.error(`[CHECK FAILED] ${monitor.url} | Status: ${status} | Latency: ${latency}ms`);
+        if (error.code) console.error(`[ERROR CODE] ${error.code}`);
+        if (error.message) console.error(`[ERROR MSG] ${error.message}`);
+
+        return { status, latency };
     }
 }
 
