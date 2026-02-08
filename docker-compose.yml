@@ -14,6 +14,12 @@ services:
     # Load .env file if it exists
     env_file:
       - .env
+    networks:
+      - coolify
 
 volumes:
   vps_data:
+
+networks:
+  coolify:
+    external: true
